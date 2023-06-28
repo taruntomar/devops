@@ -1,0 +1,35 @@
+Certainly! Here's an example of acceptance criteria for creating a pipeline in Azure DevOps based on your requirements:
+
+User Story: As a developer, I want to have a CI/CD pipeline in Azure DevOps that performs static code analysis, builds and tests an ASP.NET Core 6 web application before PR merge. Upon merging, the pipeline should build the project, create a signed artifact, generate a zip package with all output files, create a tag and GitHub release using GitHub REST APIs, publish the zip package to JFrog Zip repository, and attach the zip package to the GitHub release.
+
+Acceptance Criteria:
+
+The CI/CD pipeline should be triggered automatically upon a new commit or pull request to the repository.
+
+The pipeline should create an ASP.NET Core 6 web application project based on the provided configuration.
+
+Static code analysis tools, such as SonarQube or Roslyn analyzers, should be integrated into the pipeline to analyze the codebase for potential issues or violations.
+
+The pipeline should build the ASP.NET Core web application, ensuring that all dependencies are resolved, and the build process succeeds.
+
+A unit testing framework, such as NUnit or xUnit, should be integrated into the pipeline to execute the test cases and provide feedback on the test results.
+
+Before merging the pull request, the pipeline should run the static code analysis and unit tests. If any issues or test failures are detected, the pipeline should prevent the merge and provide detailed feedback to the developer.
+
+Upon successful merging of the pull request, the pipeline should trigger a new build of the project.
+
+The pipeline should sign the artifact using the specified certificate to ensure integrity and authenticity.
+
+The pipeline should create a zip package containing all executable (.exe) and dynamic-link library (.dll) files along with other relevant output files.
+
+The pipeline should generate a tag value based on semantic versioning, such as "v1.0.0-alpha+buildmetadata".
+
+If the artifact was created from the "dev" branch, the pipeline should mark the GitHub release as a pre-release. If the artifact is from the "release" branch, the pipeline should not mark it as a pre-release.
+
+The pipeline should use GitHub REST APIs to create a new tag and GitHub release, attaching the zip package to the release.
+
+The pipeline should publish the zip package to the JFrog Zip repository, ensuring that it is available for distribution and consumption.
+
+The pipeline should provide comprehensive logs and notifications to developers and stakeholders regarding the status and outcome of each step.
+
+The pipeline should be well-documented, including instructions for setup, configuration, and troubleshooting.
