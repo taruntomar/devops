@@ -1,0 +1,25 @@
+{
+    "SchemaVersion": "1.6",
+    "Version": "1.0",
+    "DeploymentType": "SingleMachineCluster",
+    "Init": {
+        "ServiceIPRangeSize": 10
+    },
+    "Network": {
+        "NetworkPlugin": "flannel",
+        "InternetDisabled": false
+    },
+    "User": {
+        "AcceptEula": true,
+        "AcceptOptionalTelemetry": true
+    },
+    "Machines": [
+        {
+            "LinuxNode": {
+                "CpuCount": 4,
+                "MemoryInMB": 4096,
+                "DataSizeInGB": 20
+            }
+        }
+    ]
+}

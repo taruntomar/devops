@@ -1,0 +1,94 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20230525065608
+Username: DESKTOP-P5B2CI8\Tarun
+RunAs User: DESKTOP-P5B2CI8\Tarun
+Configuration Name: 
+Machine: DESKTOP-P5B2CI8 (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 17892
+PSVersion: 5.1.19041.2673
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.2673
+BuildVersion: 10.0.19041.2673
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is C:\dev\edge-essential\aksedgedlog-230525-0656.txt
+Step 1 : Azure/AKS-Edge repo setup
+Loading AksEdgeDeploy module from C:\dev\edge-essential\AKS-Edge-main\tools\modules..
+HostOS	: Microsoft Windows 10 Home Single Language(100) 
+Version	: 10.0.19045.2965 
+Lang	: en-US 
+Name	: DESKTOP-P5B2CI8
+Total CPUs		: 8
+Free RAM / Total RAM	: 16 GB / 24 GB
+Free Disk / Total Disk	: 85 GB / 233 GB
+Network Adapters	:
+Ethernet(Disconnected),
+Wi-Fi(Up),
+
+VPN Profile		: None
+AKS Edge Essentials is not installed.
+AksEdgeShell  version  	: 1.0.230221.1000
+AksEdgeDeploy version  	: 1.0.230321.1200
+Hyper-V is disabled.
+Step 2: Setup Azure Cloud for Arc connections
+>> skipping step 2
+Step 3: Download, install and deploy AKS Edge Essentials
+AksEdgeDeploy version: 1.0.230321.1200
+HostOS	: Microsoft Windows 10 Home Single Language(100) 
+Version	: 10.0.19045.2965 
+Lang	: en-US 
+Name	: DESKTOP-P5B2CI8
+Total CPUs		: 8
+Free RAM / Total RAM	: 16 GB / 24 GB
+Free Disk / Total Disk	: 85 GB / 233 GB
+Network Adapters	:
+Ethernet(Disconnected),
+Wi-Fi(Up),
+
+VPN Profile		: None
+AKS Edge Essentials is not installed.
+
+--- Verifying AksEdge Install Configuration...
+* AKS Edge Essentials - K3s to be installed
+*** No errors found in the Install Configuration.
+Installing AKS Edge Essentials - K3s from https://aka.ms/aks-edge/k3s-msi
+AKS Edge Essentials - K3s 1.1.220.0 is installed.
+Loading AksEdge module..
+AksEdge version        	: 1.1.220.0
+AKS Edge Essentials - K3s successfully installed
+AksEdge version        	: 1.1.220.0
+Running Install-AksEdgeHostFeatures
+ - Checking host for required features
+ - Checking the status of 'Microsoft-Hyper-V'
+ - 'Microsoft-Hyper-V' is not Installed
+ - Checking the status of 'Microsoft-Hyper-V-Management-PowerShell'
+ - 'Microsoft-Hyper-V-Management-PowerShell' is not Installed
+ - Checking the status of 'Microsoft-Hyper-V-Hypervisor'
+ - 'Microsoft-Hyper-V-Hypervisor' is not Installed
+ - Checking the status of 'OpenSSH.Client*'
+ - Checking power management settings of the Host
+ - Sleep mode on AC is not disabled
+ - Sleep mode on DC is not disabled
+ - Hyper-V needs to be installed first to check the HNS version
+ - Checking OpenSSH version of the Host
+ - This Microsoft-Hyper-V feature is not installed, Starting to Install the feature
+PS>TerminatingError(Enable-WindowsOptionalFeature): "Feature name Microsoft-Hyper-V is unknown.
+"
+
+[05/25/2023 07:00:12]
+Exception Caught!!!
+ - Feature name Microsoft-Hyper-V is unknown.
+ (AksEdge-Core.psm1:6168)
+Deployment Successful.
+Step 4: Connect to Arc
+>> skipping step 4
+Duration: 0 hrs 4 mins 4 seconds
+**********************
+Windows PowerShell transcript end
+End time: 20230525070012
+**********************

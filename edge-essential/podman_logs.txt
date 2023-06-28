@@ -1,0 +1,28 @@
+Launching WSL Kernel Install...
+Downloading VM image: fedora-podman-amd64-v37.0.23.tar.xz: done
+Extracting compressed file
+Importing operating system into WSL (this may take a few minutes on a new WSL install)...
+Import in progress, this may take a few minutes.
+The operation completed successfully.
+Configuring system...
+Generating public/private ed25519 key pair.
+Your identification has been saved in podman-machine-default
+Your public key has been saved in podman-machine-default.pub
+The key fingerprint is:
+SHA256:FZOBpOZz/sj69TW5HFMMjCNaIDmudac7FDE/vTcB+iM root@DESKTOP-P5B2CI8
+The key's randomart image is:
++--[ED25519 256]--+
+|      .oo.+o     |
+|      oo+..o.o   |
+|     .o. ++oo.o  |
+|     oo o+=....o |
+|     oo.S+ o . .o|
+|    .  +o E + oo |
+|       ..... o*. |
+|       .o+ . o = |
+|      .o+.. . o  |
++----[SHA256]-----+
+Machine init complete
+To start your machine run:
+
+        podman machine start

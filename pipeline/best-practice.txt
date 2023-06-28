@@ -1,0 +1,27 @@
+User Story: As a developer, I want to have a CI pipeline in Azure DevOps that performs static code analysis, builds a .NET library, executes test cases before PR merge, and upon merging, builds the project, creates a signed artifact, and publishes it to JFrog NuGet repository.
+
+Acceptance Criteria:
+
+The CI pipeline should be triggered automatically upon a new commit or pull request to the repository.
+
+Static code analysis tools, such as SonarQube or Roslyn analyzers, should be integrated into the pipeline to analyze the codebase for potential issues or violations.
+
+The pipeline should build the .NET library, ensuring that all dependencies are resolved and the build succeeds.
+
+A unit testing framework, such as NUnit or xUnit, should be integrated into the pipeline to execute the test cases and provide feedback on the test results.
+
+The pipeline should enforce a minimum code coverage threshold for the test cases, ensuring adequate test coverage.
+
+Before merging the pull request, the pipeline should run the static code analysis and unit tests. If any issues or test failures are detected, the pipeline should prevent the merge and provide detailed feedback to the developer.
+
+Upon successful merging of the pull request, the pipeline should trigger a new build of the project.
+
+The pipeline should sign the artifact using the specified certificate to ensure integrity and authenticity.
+
+The signed artifact should be published to the JFrog NuGet repository, ensuring that it is available for distribution and consumption.
+
+The pipeline should provide comprehensive logs and notifications to developers and stakeholders regarding the status and outcome of each step.
+
+The pipeline should be well-documented, including instructions for setup, configuration, and troubleshooting.
+
+Remember to adapt these acceptance criteria to your specific requirements and environment. Additionally, you may need to configure the corresponding tasks and steps in Azure DevOps to implement the desired functionality.

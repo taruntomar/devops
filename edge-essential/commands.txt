@@ -1,0 +1,7 @@
+# Set this variable to the name of your ACR. The name must be globally unique.
+
+MYACR=tarunContianerRegistry
+
+# Create an AKS cluster with ACR integration.
+
+az aks create -n tarunAKSCluster -g myResourceGroup --generate-ssh-keys --attach-acr $MYACR

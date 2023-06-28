@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+
+  <!-- Cloud Platform -->
+  <rect x="200" y="80" width="400" height="160" fill="#F8F8F8" stroke="#000" stroke-width="2" />
+  <text x="400" y="140" text-anchor="middle" font-family="Arial" font-size="18">Cloud Platform</text>
+
+  <!-- Cloud Application -->
+  <rect x="250" y="220" width="300" height="120" fill="#F8F8F8" stroke="#000" stroke-width="2" />
+  <text x="400" y="290" text-anchor="middle" font-family="Arial" font-size="14">Cloud Application</text>
+
+  <!-- Data Analytics -->
+  <rect x="300" y="360" width="200" height="100" fill="#F8F8F8" stroke="#000" stroke-width="2" />
+  <text x="400" y="410" text-anchor="middle" font-family="Arial" font-size="14">Data Analytics</text>
+
+  <!-- Device -->
+  <rect x="100" y="200" width="120" height="160" fill="#F8F8F8" stroke="#000" stroke-width="2" />
+  <text x="160" y="310" text-anchor="middle" font-family="Arial" font-size="14">Device</text>
+
+  <!-- Controller -->
+  <rect x="240" y="200" width="120" height="80" fill="#F8F8F8" stroke="#000" stroke-width="2" />
+  <text x="300" y="240" text-anchor="middle" font-family="Arial" font-size="14">Controller</text>
+
+  <!-- Device-to-Cloud -->
+  <line x1="340" y1="240" x2="400" y2="240" stroke="#000" stroke-width="2" stroke-dasharray="5,5" />
+
+  <!-- Cloud-to-Device -->
+  <line x1="400" y1="240" x2="460" y2="240" stroke="#000" stroke-width="2" stroke-dasharray="5,5" />
+
+  <!-- User -->
+  <rect x="180" y="400" width="100" height="80" fill="#F8F8F8" stroke="#000" stroke-width="2" />
+  <text x="230" y="450" text-anchor="middle" font-family="Arial" font-size="14">User</text>
+
+  <!-- User-to-Cloud -->
+  <line x1="230" y1="480" x2="400" y2="480" stroke="#000" stroke-width="2" stroke-dasharray="5,5" />
+
+  <!-- Security -->
+  <ellipse cx="400" cy="150" rx="50" ry="20" fill="#F8F8F8" stroke="#000" stroke-width="2" />
+  <text x="400" y="150" text-anchor="middle" font-family="Arial" font-size="12">Security</text>
+
+  <!-- Data Flow -->
+  <polyline points="400,80 400,100 340,100 340,240" fill="none" stroke="#000" stroke-width="2" />
+
+</svg>
