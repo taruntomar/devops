@@ -1,31 +1,47 @@
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Internal;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
-public class FileDistributedCache : MemoryDistributedCache
+public class FileDistributedCache : IDistributedCache
 {
-    private const string CacheFileName = "cache_data.txt";
+    private readonly MemoryDistributedCache memoryCache;
+    private readonly string cacheFilePath;
+    private readonly string encryptionPassword;
 
-    public FileDistributedCache(IOptions<MemoryDistributedCacheOptions> optionsAccessor) : base(optionsAccessor) { }
-
-    public override void Set(string key, byte[] value, DistributedCacheEntryOptions options)
+    public FileDistributedCache(IOptions<MemoryDistributedCacheOptions> optionsAccessor, string cacheFilePath, string encryptionPassword)
     {
-        base.Set(key, value, options);
+        memoryCache = new MemoryDistributedCache(optionsAccessor);
+        this.cacheFilePath = cacheFilePath;
+        this.encryptionPassword = encryptionPassword;
+        LoadFromCacheFile();
+    }
+
+    public byte[] Get(string key)
+    {
+        return memoryCache.Get(key);
+    }
+
+    public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
+    {
+        memoryCache.Set(key, value, options);
         SaveToCacheFile();
     }
 
-    public override void Refresh(string key)
+    public void Refresh(string key)
     {
-        base.Refresh(key);
+        memoryCache.Refresh(key);
         UpdateExpirationInCacheFile(key);
     }
 
-    public override void Remove(string key)
+    public void Remove(string key)
     {
-        base.Remove(key);
+        memoryCache.Remove(key);
         RemoveFromCacheFile(key);
     }
 
@@ -33,7 +49,7 @@ public class FileDistributedCache : MemoryDistributedCache
     {
         var entries = new List<CacheEntry>();
 
-        foreach (var cacheEntry in Entries)
+        foreach (var cacheEntry in memoryCache.GetCacheEntries())
         {
             if (!cacheEntry.Expiration.HasValue || cacheEntry.Expiration > DateTimeOffset.UtcNow)
             {
@@ -41,7 +57,10 @@ public class FileDistributedCache : MemoryDistributedCache
             }
         }
 
-        File.WriteAllText(CacheFileName, Serialize(entries));
+        var serializedEntries = JsonConvert.SerializeObject(entries);
+        var encryptedData = Encrypt(serializedEntries, encryptionPassword);
+
+        File.WriteAllText(cacheFilePath, encryptedData);
     }
 
     private void UpdateExpirationInCacheFile(string key)
@@ -51,8 +70,8 @@ public class FileDistributedCache : MemoryDistributedCache
 
         if (entry != null)
         {
-            entry.Expiration = GetExpirationForKey(key);
-            File.WriteAllText(CacheFileName, Serialize(entries));
+            entry.Expiration = memoryCache.GetExpirationForKey(key);
+            SaveToCacheFile();
         }
     }
 
@@ -60,43 +79,55 @@ public class FileDistributedCache : MemoryDistributedCache
     {
         var entries = LoadFromCacheFile();
         entries.RemoveAll(e => e.Key == key);
-        File.WriteAllText(CacheFileName, Serialize(entries));
+        SaveToCacheFile();
     }
 
     private List<CacheEntry> LoadFromCacheFile()
     {
-        if (File.Exists(CacheFileName))
+        if (File.Exists(cacheFilePath))
         {
-            var content = File.ReadAllText(CacheFileName);
-            return Deserialize(content);
+            var encryptedData = File.ReadAllText(cacheFilePath);
+            var decryptedData = Decrypt(encryptedData, encryptionPassword);
+
+            return JsonConvert.DeserializeObject<List<CacheEntry>>(decryptedData) ?? new List<CacheEntry>();
         }
 
         return new List<CacheEntry>();
     }
 
-    private string Serialize(List<CacheEntry> entries)
+    private string Encrypt(string data, string password)
     {
-        // Implement your own serialization logic, e.g., using JSON
-        // This is just a simple example using string concatenation
-        return string.Join(Environment.NewLine, entries.Select(e => $"{e.Key},{Convert.ToBase64String(e.Value)},{e.Expiration}"));
-    }
-
-    private List<CacheEntry> Deserialize(string content)
-    {
-        // Implement your own deserialization logic
-        // This is just a simple example using string splitting
-        var lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-        var entries = new List<CacheEntry>();
-
-        foreach (var line in lines)
+        using (Aes aesAlg = Aes.Create())
         {
-            var parts = line.Split(',');
-            if (parts.Length == 3 && DateTimeOffset.TryParse(parts[2], out var expiration))
+            Rfc2898DeriveBytes keyDerivation = new Rfc2898DeriveBytes(password, aesAlg.KeySize / 8);
+            aesAlg.Key = keyDerivation.GetBytes(aesAlg.KeySize / 8);
+
+            using (MemoryStream msEncrypt = new MemoryStream())
             {
-                entries.Add(new CacheEntry(parts[0], Convert.FromBase64String(parts[1]), new DistributedCacheEntryOptions { AbsoluteExpiration = expiration }));
+                using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, aesAlg.CreateEncryptor(), CryptoStreamMode.Write))
+                using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                {
+                    swEncrypt.Write(data);
+                }
+
+                return Convert.ToBase64String(msEncrypt.ToArray());
             }
         }
+    }
 
-        return entries;
+    private string Decrypt(string encryptedData, string password)
+    {
+        using (Aes aesAlg = Aes.Create())
+        {
+            Rfc2898DeriveBytes keyDerivation = new Rfc2898DeriveBytes(password, aesAlg.KeySize / 8);
+            aesAlg.Key = keyDerivation.GetBytes(aesAlg.KeySize / 8);
+
+            using (MemoryStream msDecrypt = new MemoryStream(Convert.FromBase64String(encryptedData)))
+            using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, aesAlg.CreateDecryptor(), CryptoStreamMode.Read))
+            using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+            {
+                return srDecrypt.ReadToEnd();
+            }
+        }
     }
 }
