@@ -8,6 +8,20 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
+public class CustomCacheEntry
+{
+    public string Key { get; set; }
+    public byte[] Value { get; set; }
+    public DateTimeOffset? Expiration { get; set; }
+
+    public CustomCacheEntry(string key, byte[] value, DateTimeOffset? expiration)
+    {
+        Key = key;
+        Value = value;
+        Expiration = expiration;
+    }
+}
+
 public class FileDistributedCache : IDistributedCache
 {
     private readonly MemoryDistributedCache memoryCache;
