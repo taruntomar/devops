@@ -22,6 +22,17 @@ public class CustomCacheEntry
     }
 }
 
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+
 public class FileDistributedCache : IDistributedCache
 {
     private readonly MemoryDistributedCache memoryCache;
@@ -116,15 +127,13 @@ public class FileDistributedCache : IDistributedCache
         foreach (var key in cacheKeys)
         {
             var value = memoryCache.Get(key);
-            var cacheOptions = memoryCache.GetCacheEntryOptions(key);
-            var expiration = DateTimeOffset.UtcNow.Add(cacheOptions?.AbsoluteExpirationRelativeToNow ?? TimeSpan.Zero);
+            var entryOptions = memoryCache.GetEntryOptions(key);
+            var expiration = DateTimeOffset.UtcNow.Add(entryOptions?.AbsoluteExpirationRelativeToNow ?? TimeSpan.Zero);
             entries.Add(new CustomCacheEntry(key, value, expiration));
         }
 
         return entries;
     }
-
-
     private string Encrypt(string data, string password)
     {
         using (Aes aesAlg = Aes.Create())
