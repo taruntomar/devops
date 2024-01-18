@@ -24,7 +24,7 @@ public class CustomCacheEntry
 
 public class FileDistributedCache : IDistributedCache
 {
-    private readonly MemoryDistributedCache memoryCache;
+     private readonly MemoryDistributedCache memoryCache;
     private readonly string cacheFilePath;
     private readonly string encryptionPassword;
     private readonly HashSet<string> cacheKeys;
@@ -80,7 +80,7 @@ public class FileDistributedCache : IDistributedCache
 
         if (entry != null)
         {
-            entry.Expiration = memoryCache.GetExpirationForKey(key);
+            entry.Expiration = DateTimeOffset.UtcNow.Add(memoryCache.GetOptions(key)?.AbsoluteExpirationRelativeToNow ?? TimeSpan.Zero);
             SaveToCacheFile();
         }
     }
@@ -115,7 +115,7 @@ public class FileDistributedCache : IDistributedCache
         foreach (var key in cacheKeys)
         {
             var value = memoryCache.Get(key);
-            var expiration = memoryCache.GetExpirationForKey(key);
+            var expiration = DateTimeOffset.UtcNow.Add(memoryCache.GetOptions(key)?.AbsoluteExpirationRelativeToNow ?? TimeSpan.Zero);
             entries.Add(new CustomCacheEntry(key, value, expiration));
         }
 
