@@ -1,0 +1,102 @@
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Internal;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+
+public class FileDistributedCache : MemoryDistributedCache
+{
+    private const string CacheFileName = "cache_data.txt";
+
+    public FileDistributedCache(IOptions<MemoryDistributedCacheOptions> optionsAccessor) : base(optionsAccessor) { }
+
+    public override void Set(string key, byte[] value, DistributedCacheEntryOptions options)
+    {
+        base.Set(key, value, options);
+        SaveToCacheFile();
+    }
+
+    public override void Refresh(string key)
+    {
+        base.Refresh(key);
+        UpdateExpirationInCacheFile(key);
+    }
+
+    public override void Remove(string key)
+    {
+        base.Remove(key);
+        RemoveFromCacheFile(key);
+    }
+
+    private void SaveToCacheFile()
+    {
+        var entries = new List<CacheEntry>();
+
+        foreach (var cacheEntry in Entries)
+        {
+            if (!cacheEntry.Expiration.HasValue || cacheEntry.Expiration > DateTimeOffset.UtcNow)
+            {
+                entries.Add(cacheEntry);
+            }
+        }
+
+        File.WriteAllText(CacheFileName, Serialize(entries));
+    }
+
+    private void UpdateExpirationInCacheFile(string key)
+    {
+        var entries = LoadFromCacheFile();
+        var entry = entries.Find(e => e.Key == key);
+
+        if (entry != null)
+        {
+            entry.Expiration = GetExpirationForKey(key);
+            File.WriteAllText(CacheFileName, Serialize(entries));
+        }
+    }
+
+    private void RemoveFromCacheFile(string key)
+    {
+        var entries = LoadFromCacheFile();
+        entries.RemoveAll(e => e.Key == key);
+        File.WriteAllText(CacheFileName, Serialize(entries));
+    }
+
+    private List<CacheEntry> LoadFromCacheFile()
+    {
+        if (File.Exists(CacheFileName))
+        {
+            var content = File.ReadAllText(CacheFileName);
+            return Deserialize(content);
+        }
+
+        return new List<CacheEntry>();
+    }
+
+    private string Serialize(List<CacheEntry> entries)
+    {
+        // Implement your own serialization logic, e.g., using JSON
+        // This is just a simple example using string concatenation
+        return string.Join(Environment.NewLine, entries.Select(e => $"{e.Key},{Convert.ToBase64String(e.Value)},{e.Expiration}"));
+    }
+
+    private List<CacheEntry> Deserialize(string content)
+    {
+        // Implement your own deserialization logic
+        // This is just a simple example using string splitting
+        var lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+        var entries = new List<CacheEntry>();
+
+        foreach (var line in lines)
+        {
+            var parts = line.Split(',');
+            if (parts.Length == 3 && DateTimeOffset.TryParse(parts[2], out var expiration))
+            {
+                entries.Add(new CacheEntry(parts[0], Convert.FromBase64String(parts[1]), new DistributedCacheEntryOptions { AbsoluteExpiration = expiration }));
+            }
+        }
+
+        return entries;
+    }
+}
