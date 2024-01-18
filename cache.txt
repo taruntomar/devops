@@ -27,12 +27,14 @@ public class FileDistributedCache : IDistributedCache
     private readonly MemoryDistributedCache memoryCache;
     private readonly string cacheFilePath;
     private readonly string encryptionPassword;
+    private readonly HashSet<string> cacheKeys;
 
     public FileDistributedCache(IOptions<MemoryDistributedCacheOptions> optionsAccessor, string cacheFilePath, string encryptionPassword)
     {
         memoryCache = new MemoryDistributedCache(optionsAccessor);
         this.cacheFilePath = cacheFilePath;
         this.encryptionPassword = encryptionPassword;
+        cacheKeys = new HashSet<string>();
         LoadFromCacheFile();
     }
 
@@ -44,6 +46,7 @@ public class FileDistributedCache : IDistributedCache
     public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
     {
         memoryCache.Set(key, value, options);
+        cacheKeys.Add(key);
         SaveToCacheFile();
     }
 
@@ -56,20 +59,13 @@ public class FileDistributedCache : IDistributedCache
     public void Remove(string key)
     {
         memoryCache.Remove(key);
-        RemoveFromCacheFile(key);
+        cacheKeys.Remove(key);
+        SaveToCacheFile();
     }
 
     private void SaveToCacheFile()
     {
-        var entries = new List<CacheEntry>();
-
-        foreach (var cacheEntry in memoryCache.GetCacheEntries())
-        {
-            if (!cacheEntry.Expiration.HasValue || cacheEntry.Expiration > DateTimeOffset.UtcNow)
-            {
-                entries.Add(cacheEntry);
-            }
-        }
+        var entries = GetCacheEntries();
 
         var serializedEntries = JsonConvert.SerializeObject(entries);
         var encryptedData = Encrypt(serializedEntries, encryptionPassword);
@@ -96,18 +92,36 @@ public class FileDistributedCache : IDistributedCache
         SaveToCacheFile();
     }
 
-    private List<CacheEntry> LoadFromCacheFile()
+    private List<CustomCacheEntry> LoadFromCacheFile()
     {
         if (File.Exists(cacheFilePath))
         {
             var encryptedData = File.ReadAllText(cacheFilePath);
             var decryptedData = Decrypt(encryptedData, encryptionPassword);
 
-            return JsonConvert.DeserializeObject<List<CacheEntry>>(decryptedData) ?? new List<CacheEntry>();
+            var entries = JsonConvert.DeserializeObject<List<CustomCacheEntry>>(decryptedData) ?? new List<CustomCacheEntry>();
+            cacheKeys.Clear();
+            cacheKeys.UnionWith(entries.Select(e => e.Key));
+            return entries;
         }
 
-        return new List<CacheEntry>();
+        return new List<CustomCacheEntry>();
     }
+
+    private List<CustomCacheEntry> GetCacheEntries()
+    {
+        var entries = new List<CustomCacheEntry>();
+
+        foreach (var key in cacheKeys)
+        {
+            var value = memoryCache.Get(key);
+            var expiration = memoryCache.GetExpirationForKey(key);
+            entries.Add(new CustomCacheEntry(key, value, expiration));
+        }
+
+        return entries;
+    }
+
 
     private string Encrypt(string data, string password)
     {
