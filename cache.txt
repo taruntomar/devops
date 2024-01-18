@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -68,17 +67,19 @@ public class FileDistributedCache : IDistributedCache
         File.WriteAllText(cacheFilePath, encryptedData);
     }
 
-    private List<CacheEntry> LoadFromCacheFile()
+    private Dictionary<string, CacheEntry> LoadFromCacheFile()
     {
         if (File.Exists(cacheFilePath))
         {
             var encryptedData = File.ReadAllText(cacheFilePath);
             var decryptedData = Decrypt(encryptedData, encryptionPassword);
 
-            return JsonConvert.DeserializeObject<List<CacheEntry>>(decryptedData) ?? new List<CacheEntry>();
+            var entries = JsonConvert.DeserializeObject<List<CacheEntry>>(decryptedData) ?? new List<CacheEntry>();
+
+            return entries.ToDictionary(entry => entry.Key);
         }
 
-        return new List<CacheEntry>();
+        return new Dictionary<string, CacheEntry>();
     }
 
     private string Encrypt(string data, string password)
