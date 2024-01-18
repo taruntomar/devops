@@ -1,139 +1,86 @@
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-
-public class CustomCacheEntry
-{
-    public string Key { get; set; }
-    public byte[] Value { get; set; }
-    public DateTimeOffset? Expiration { get; set; }
-
-    public CustomCacheEntry(string key, byte[] value, DateTimeOffset? expiration)
-    {
-        Key = key;
-        Value = value;
-        Expiration = expiration;
-    }
-}
-
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
 public class FileDistributedCache : IDistributedCache
 {
-    private readonly MemoryDistributedCache memoryCache;
     private readonly string cacheFilePath;
     private readonly string encryptionPassword;
-    private readonly HashSet<string> cacheKeys;
+    private readonly Dictionary<string, CacheEntry> cacheEntries;
 
-    public FileDistributedCache(IOptions<MemoryDistributedCacheOptions> optionsAccessor, string cacheFilePath, string encryptionPassword)
+    public FileDistributedCache(string cacheFilePath, string encryptionPassword)
     {
-        memoryCache = new MemoryDistributedCache(optionsAccessor);
         this.cacheFilePath = cacheFilePath;
         this.encryptionPassword = encryptionPassword;
-        cacheKeys = new HashSet<string>();
-        LoadFromCacheFile();
+        this.cacheEntries = LoadFromCacheFile();
     }
 
     public byte[] Get(string key)
     {
-        return memoryCache.Get(key);
+        if (cacheEntries.TryGetValue(key, out var entry))
+        {
+            if (entry.Expiration == null || entry.Expiration > DateTimeOffset.UtcNow)
+            {
+                return entry.Value;
+            }
+            else
+            {
+                cacheEntries.Remove(key);
+                SaveToCacheFile();
+            }
+        }
+
+        return null;
     }
 
     public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
     {
-        memoryCache.Set(key, value, options);
-        cacheKeys.Add(key);
+        var expiration = options?.AbsoluteExpiration;
+        cacheEntries[key] = new CacheEntry { Key = key, Value = value, Expiration = expiration };
         SaveToCacheFile();
     }
 
     public void Refresh(string key)
     {
-        memoryCache.Refresh(key);
-        UpdateExpirationInCacheFile(key);
+        if (cacheEntries.TryGetValue(key, out var entry))
+        {
+            entry.Expiration = DateTimeOffset.UtcNow.Add(entry.RelativeExpiration);
+            SaveToCacheFile();
+        }
     }
 
     public void Remove(string key)
     {
-        memoryCache.Remove(key);
-        cacheKeys.Remove(key);
+        cacheEntries.Remove(key);
         SaveToCacheFile();
     }
 
     private void SaveToCacheFile()
     {
-        var entries = GetCacheEntries();
-
-        var serializedEntries = JsonConvert.SerializeObject(entries);
+        var serializedEntries = JsonConvert.SerializeObject(cacheEntries.Values);
         var encryptedData = Encrypt(serializedEntries, encryptionPassword);
 
         File.WriteAllText(cacheFilePath, encryptedData);
     }
 
-    private void UpdateExpirationInCacheFile(string key)
-    {
-        var entries = LoadFromCacheFile();
-        var entry = entries.Find(e => e.Key == key);
-
-        if (entry != null)
-        {
-            var cacheOptions = memoryCache.GetOptions(key);
-            entry.Expiration = DateTimeOffset.UtcNow.Add(cacheOptions?.AbsoluteExpirationRelativeToNow ?? TimeSpan.Zero);
-            SaveToCacheFile();
-        }
-    }
-
-    private void RemoveFromCacheFile(string key)
-    {
-        var entries = LoadFromCacheFile();
-        entries.RemoveAll(e => e.Key == key);
-        SaveToCacheFile();
-    }
-
-    private List<CustomCacheEntry> LoadFromCacheFile()
+    private List<CacheEntry> LoadFromCacheFile()
     {
         if (File.Exists(cacheFilePath))
         {
             var encryptedData = File.ReadAllText(cacheFilePath);
             var decryptedData = Decrypt(encryptedData, encryptionPassword);
 
-            var entries = JsonConvert.DeserializeObject<List<CustomCacheEntry>>(decryptedData) ?? new List<CustomCacheEntry>();
-            cacheKeys.Clear();
-            cacheKeys.UnionWith(entries.Select(e => e.Key));
-            return entries;
+            return JsonConvert.DeserializeObject<List<CacheEntry>>(decryptedData) ?? new List<CacheEntry>();
         }
 
-        return new List<CustomCacheEntry>();
+        return new List<CacheEntry>();
     }
 
-    private List<CustomCacheEntry> GetCacheEntries()
-    {
-        var entries = new List<CustomCacheEntry>();
-
-        foreach (var key in cacheKeys)
-        {
-            var value = memoryCache.Get(key);
-            var entryOptions = memoryCache.GetEntryOptions(key);
-            var expiration = DateTimeOffset.UtcNow.Add(entryOptions?.AbsoluteExpirationRelativeToNow ?? TimeSpan.Zero);
-            entries.Add(new CustomCacheEntry(key, value, expiration));
-        }
-
-        return entries;
-    }
     private string Encrypt(string data, string password)
     {
         using (Aes aesAlg = Aes.Create())
@@ -168,5 +115,13 @@ public class FileDistributedCache : IDistributedCache
                 return srDecrypt.ReadToEnd();
             }
         }
+    }
+
+    private class CacheEntry
+    {
+        public string Key { get; set; }
+        public byte[] Value { get; set; }
+        public DateTimeOffset? Expiration { get; set; }
+        // Add other metadata as needed
     }
 }
